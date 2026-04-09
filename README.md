@@ -103,14 +103,18 @@ npx expo start
 
 ## 🔌 Acesso à API
 
-A API entrega endpoints modernos via protocolo HTTP para alimentar o Mobile. Como breve ilustração, as rotas principais incluem:
+A API entrega endpoints modernos via protocolo HTTP para alimentar o Mobile e receber dados do Hardware. As rotas principais incluem:
 
-- `GET /api/dashboard`: Retorna as variáveis em tempo real da estufa (últimos apontamentos sensoriais).
-- `GET /api/sensores/historico`: Recupera as métricas anteriores e os históricos dos sensores para o gráfico.
-- `GET /api/alertas/ativos`: Retorna uma matriz de notificações sobre condições críticas do solo ou temperatura.
-- `POST /api/sensores/dados`: Rota responsável pela integração com os módulos IoT. Captura o payload emitido pela placa ESP32.
+- **`GET /api/health`**: Verifica o status da API e MongoDB, retornando também a última leitura e alerta para diagnóstico.
+- **`GET /api/dashboard`**: Retorna o resumo operacional da estufa (status, última leitura e alerta ativo).
+- **`POST /api/leituras`**: Rota de borda que recebe o payload JSON enviado pelo ESP32 para persistência.
+- **`GET /api/leituras/ultimas`**: Recupera apenas o registro mais recente de telemetria.
+- **`GET /api/leituras/historico`**: Recupera a série temporal de métricas para geração de gráficos.
+- **`GET /api/alertas/ativos`**: Lista as notificações críticas que ainda não foram tratadas.
+- **`GET /api/alertas`**: Histórico completo de ocorrências da estufa.
+- **`PATCH /api/alertas/{id}/lido`**: Sinaliza que o agricultor mitigou a condição de alerta.
 
-> **💡 Dica de Documentação**: Acesse o contrato da API completamente interativo via Swagger digitando `http://localhost:8000/docs` enquanto executa o backend uvicorn.
+> **💡 Dica de Documentação**: Acesse o contrato da API completamente interativo via Swagger digitando `http://localhost:8000/docs` enquanto executa o backend FastAPI.
 
 ## 👥 Equipe
 
