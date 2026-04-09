@@ -1,5 +1,5 @@
-import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from "axios";
 
 /**
  * Sinalizador para forçar a renderização com dados falsos (Mock) ou usar os módulos de IoT reais.
@@ -27,18 +27,18 @@ const apiClient = axios.create({
  * Adverte automaticamente serviços de túnel (como ngrok ou localtunnel) para pular as telas de aviso.
  */
 apiClient.interceptors.request.use(async (config) => {
-    try {
-        const customUrl = await AsyncStorage.getItem(API_STORAGE_KEY);
-        if (customUrl) {
-            config.baseURL = customUrl;
-        }
-        // Bypass automático para as telas de "Aviso" do Localtunnel/Ngrok
-        config.headers['Bypass-Tunnel-Reminder'] = 'true';
-        config.headers['ngrok-skip-browser-warning'] = '69420';
-    } catch (e) {
-        console.log("Erro lendo custom URL", e);
+  try {
+    const customUrl = await AsyncStorage.getItem(API_STORAGE_KEY);
+    if (customUrl) {
+      config.baseURL = customUrl;
     }
-    return config;
+    // Bypass automático para as telas de "Aviso" do Localtunnel/Ngrok
+    config.headers['Bypass-Tunnel-Reminder'] = 'true';
+    config.headers['ngrok-skip-browser-warning'] = '69420';
+  } catch (e) {
+    console.log("Erro lendo custom URL", e);
+  }
+  return config;
 });
 
 // --- Tipos Globais baseados no Relatório Técnico ---
@@ -84,6 +84,8 @@ export type HealthData = {
   status: string;
   api: string;
   mongodb: string;
+  latest_reading: Leitura | null;
+  latest_alert: Alerta | null;
   checked_at: string;
 };
 
@@ -176,7 +178,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * Controlador singleton principal do sistema gerenciando toda a integração Mobile -> Backend IoT
  */
 export const ApiService = {
-  
+
   /**
    * Resgata a carga primária com as métricas mais atualizadas consolidadas.
    * @returns {Promise<DashboardData>} Estrutura contendo as métricas de leitura e situação atual da estufa
@@ -184,7 +186,7 @@ export const ApiService = {
   getDashboard: async (): Promise<DashboardData> => {
     if (USE_MOCK_API) {
       await delay(600);
-      
+
       // Lógica de Teste em Mock: Alterna automaticamente entre Normal e Crítico a cada 20 segundos
       const isCriticalCycle = Math.floor(Date.now() / 20000) % 2 === 0;
 
@@ -264,6 +266,8 @@ export const ApiService = {
         status: "ok",
         api: "online (MOCK)",
         mongodb: "online (MOCK)",
+        latest_reading: mockLeituras[0],
+        latest_alert: mockAlertas[0],
         checked_at: new Date().toISOString()
       };
     }
@@ -271,21 +275,33 @@ export const ApiService = {
     return response.data;
   },
 
+  /**
+   * Resgata apenas o registro pontual mais recente de telemetria.
+   */
+  getUltimaLeitura: async (): Promise<Leitura> => {
+    if (USE_MOCK_API) {
+      await delay(300);
+      return mockLeituras[0];
+    }
+    const response = await apiClient.get<Leitura>('/api/leituras/ultimas');
+    return response.data;
+  },
+
   // ---- CONFIGURAÇÃO DINÂMICA DE REDE ----
-  
+
   /**
    * Atualiza permanentemente a ponta de comunicação que o app mobile vai escutar via IPv4.
    * Útil em ambiente de desenvolvimento híbrido ou se o IP da Raspberry/PC host da estufa mudar na planta.
    */
   setCustomApiHost: async (hostUrl: string): Promise<void> => {
-      await AsyncStorage.setItem(API_STORAGE_KEY, hostUrl);
+    await AsyncStorage.setItem(API_STORAGE_KEY, hostUrl);
   },
-  
+
   /**
    * Lê a âncora pré-definida das rotas ou faz o fallback caso seja a primeira abertura do app.
    */
   getCustomApiHost: async (): Promise<string> => {
-      const stored = await AsyncStorage.getItem(API_STORAGE_KEY);
-      return stored || DEFAULT_API_URL;
+    const stored = await AsyncStorage.getItem(API_STORAGE_KEY);
+    return stored || DEFAULT_API_URL;
   }
 };

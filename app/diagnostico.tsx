@@ -115,10 +115,35 @@ export default function DiagnosticScreen() {
                 </View>
 
                 {data ? (
-                    <View style={{ backgroundColor: theme.background, borderRadius: 12, padding: 16 }}>
-                        <StatusItem label="Situação Geral" value={data.status} isOnline={data.status === 'ok'} />
-                        <StatusItem label="API Backend" value={data.api} isOnline={data.api.toLowerCase().includes('online')} />
-                        <StatusItem label="MongoDB Atlas" value={data.mongodb} isOnline={data.mongodb.toLowerCase().includes('online')} />
+                    <View>
+                        <View style={{ backgroundColor: theme.background, borderRadius: 12, padding: 16 }}>
+                            <StatusItem label="Situação Geral" value={data.status} isOnline={data.status === 'ok'} />
+                            <StatusItem label="API Backend" value={data.api} isOnline={data.api.toLowerCase().includes('online')} />
+                            <StatusItem label="MongoDB Atlas" value={data.mongodb} isOnline={data.mongodb.toLowerCase().includes('online')} />
+                        </View>
+
+                        {/* Detalhes Técnicos da Última Telemetria */}
+                        <View style={{ marginTop: 20, padding: 10, borderLeftWidth: 3, borderLeftColor: theme.tint, backgroundColor: theme.background + '50' }}>
+                            <Text style={{ color: theme.text, fontWeight: 'bold', marginBottom: 8 }}>Último Payload de Sensores:</Text>
+                            {data.latest_reading ? (
+                                <Text style={{ color: theme.icon, fontSize: 13, lineHeight: 18 }}>
+                                    Temp: {data.latest_reading.temperature}°C | Ar: {data.latest_reading.humidity}% | Solo: {data.latest_reading.soil_moisture_percent}%{"\n"}
+                                    {new Date(data.latest_reading.timestamp).toLocaleTimeString()}
+                                </Text>
+                            ) : (
+                                <Text style={{ color: theme.icon, fontSize: 13 }}>Nenhuma leitura vinculada.</Text>
+                            )}
+                        </View>
+
+                        {/* Detalhes do Alerta Retornado */}
+                        {data.latest_alert && (
+                            <View style={{ marginTop: 12, padding: 10, borderLeftWidth: 3, borderLeftColor: Colors.severity[data.latest_alert.severity], backgroundColor: theme.background + '50' }}>
+                                <Text style={{ color: theme.text, fontWeight: 'bold', marginBottom: 4 }}>Alerta em Cache:</Text>
+                                <Text style={{ color: theme.icon, fontSize: 13 }}>
+                                    [{data.latest_alert.type.toUpperCase()}] {data.latest_alert.message}
+                                </Text>
+                            </View>
+                        )}
                     </View>
                 ) : (
                     <Text style={{ textAlign: 'center', color: theme.icon, marginVertical: 20 }}>Carregando diagnóstico...</Text>
